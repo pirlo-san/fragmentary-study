@@ -11,4 +11,6 @@ func main() {
 	*ptr2 = 200	
 	fmt.Println(ival, ptr1, *ptr1, ptr2, *ptr2)
 	fmt.Printf("%T, %T, %T, %T\n", ival, ptr1, "abc", true)
+	var ptr *int
+	fmt.Println(ptr)
 }
