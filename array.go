@@ -15,7 +15,7 @@ func main() {
 	var i, j int
 	for i = 0; i < 3; i++ {
 		for j = 0; j < 4; j++ {
-			fmt.Printf("Element[%d][%d] = %d\n", i, j, array2[i][j])
+			fmt.Printf("element[%d][%d] = %d\n", i, j, array2[i][j])
 		}
 	}
 }
