@@ -5,15 +5,34 @@ import (
 )
 
 func main() {
-	var c Circle
-	c.radius = 10.0
-	fmt.Println(c.getArea())
+	var s Student
+	s.name = "pirlo"
+	s.age  = 38
+	fmt.Println(s.getName())
+	fmt.Println(s.getAge())
+	name, age := s.getAll()
+	fmt.Printf("name: %s, age: %d\n", name, age)
+	s.printInfo()
 }
 
-type Circle struct {
-	radius float64
+type Student struct {
+	name string
+	age  int
 }
 
-func (c Circle) getArea() float64 {
-	return 3.14 * c.radius * c.radius
+
+func (s Student) getName() string {
+	return s.name
+}
+
+func (s Student) getAge() int {
+	return s.age
+}
+
+func (s Student) getAll() (string, int) {
+	return s.name, s.age
+}
+
+func (s Student) printInfo() {
+	fmt.Printf("name: %s, age: %d\n", s.name, s.age)
 }
