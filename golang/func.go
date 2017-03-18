@@ -1,27 +1,27 @@
 package main
 
-import "fmt"
-import "math"
+import (
+	"fmt"
+	"math"
+)
 
 func main() {
-	var a int = 10
-	var b int = 20
-	fmt.Printf("max(%d, %d) = %d\n", a, b, max(a, b))
-
-	name, no := swap(22, "kaka")
+	fmt.Printf("max(10, 20) = %d\n", max(10, 20))
+	name, no := swap(21, "pirlo")
 	fmt.Printf("%s %d\n", name, no)
 
-	i, j :=  100, 200
-	fmt.Printf("%d %d\n", i, j)
-	swap2(&i, &j)
-	fmt.Printf("%d %d\n", i, j)
+	var a int = 10;
+	var b int = 20;
+	fmt.Printf("before swap, a = %d, b = %d\n", a, b)
+	swap2(&a, &b)
+	fmt.Printf("before swap, a = %d, b = %d\n", a, b)
 
-	GetSquareRoot := func(x float64) float64 {
+	getSquareRoot := func (x float64) float64 {
 		return math.Sqrt(x)
 	}
 
-	fmt.Println(GetSquareRoot(9))
-	
+	fmt.Printf("getSquareRoot(9) = %f\n", getSquareRoot(9))
+
 	nextNumber := getSequence()
 	fmt.Println(nextNumber())
 	fmt.Println(nextNumber())
@@ -29,29 +29,28 @@ func main() {
 	nextNumber1 := getSequence()
 	fmt.Println(nextNumber1())
 	fmt.Println(nextNumber1())
-	fmt.Println(nextNumber1())
 }
 
-func max(a int, b int) int {
-	if a > b {
-		return a
+func max(a, b int) int {
+	var result int = b
+	if (a > b) {
+		result = a
 	}
-
-	return b
+	return result
 }
 
-func swap(i int, s string) (string, int) {
-	return s, i
+func swap(no int, name string) (string, int) {
+	return name, no
 }
 
-func swap2(i *int, j *int) {
-	var temp int = *i
-	*i = *j
-	*j = temp
+func swap2(p1 *int, p2 *int) {
+	var temp int = *p1
+	*p1 = *p2
+	*p2 = temp
 }
 
 func getSequence() func() int {
-	i := 0
+	var i int = 0
 	return func() int {
 		i++
 		return i
