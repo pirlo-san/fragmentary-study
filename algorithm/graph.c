@@ -47,8 +47,8 @@ static inline int _get_graph_vertex_index(const graph_t *pgraph, const void *pve
 {
 	int index = 0;
 	
-	assert(!pgraph);
-	assert(!pvertex);
+	assert(pgraph);
+	assert(pvertex);
 
 	for (; index < pgraph->nvertex; ++index)
 		if (pvertex == pgraph->vertices[index])
@@ -219,7 +219,7 @@ int add_graph_edge(int         graphid,
         return e_graph_err_edge_duplicated;
 
     pgraph->weight[src_vertex_index][dst_vertex_index] = weight;
-    if (pgraph->bdirected)
+    if (!pgraph->bdirected)
         pgraph->weight[dst_vertex_index][src_vertex_index] = weight;
 
     ++pgraph->nedge;
@@ -251,7 +251,7 @@ int rmv_graph_edge(int         graphid,
         return e_graph_err_edge_not_found;
 
     pgraph->weight[src_vertex_index][dst_vertex_index] = M_GRAPH_INVALID_WEIGHT;
-    if (pgraph->bdirected)
+    if (!pgraph->bdirected)
         pgraph->weight[dst_vertex_index][src_vertex_index] = M_GRAPH_INVALID_WEIGHT;
 
     --pgraph->nedge;
@@ -269,6 +269,20 @@ int update_graph_edge_weight(int         graphid,
         return ret;
 
     return add_graph_edge(graphid, src_vertex, dst_vertex, weight);
+}
+
+int get_graph_edge_num(int graphid, int *nedge)
+{
+    graph_t *graph = _get_graph(graphid);
+
+    if (!graph)
+        return e_graph_err_id_not_found;
+
+    if (!nedge)
+        return e_graph_err_null_ptr;
+
+    *nedge = graph->nedge;
+    return e_graph_success;
 }
 
 int get_graph_edge_weight(int         graphid, 
@@ -291,6 +305,20 @@ int get_graph_edge_weight(int         graphid,
         return e_graph_err_vertex_not_found;
 
     *weight = pgraph->weight[src_vertex_index][dst_vertex_index];
+    return e_graph_success;
+}
+
+int get_graph_vertex_num(int graphid, int *nvertex)
+{
+    graph_t *graph = _get_graph(graphid);
+
+    if (!graph)
+        return e_graph_err_id_not_found;
+
+    if (!nvertex)
+        return e_graph_err_null_ptr;
+
+    *nvertex = graph->nvertex;
     return e_graph_success;
 }
 
@@ -363,7 +391,7 @@ int get_graph_vertex_total_degree(int         graphid,
 
     if (!bdirected)
     {
-        *degree = 2 * indegree;
+        *degree = indegree;
         return e_graph_success;
     }
 

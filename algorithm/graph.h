@@ -40,10 +40,12 @@ int update_graph_edge_weight(IN int         graphid,
                    	                   IN const void *src_vertex, 
                    	                   IN const void *dst_vertex, 
                    	                   IN int         weight);
+int get_graph_edge_num(IN int graphid, OUT int *nedge);
 int get_graph_edge_weight(IN  int         graphid, 
                                    IN  const void *src_vertex, 
                                    IN  const void *dst_vertex,
                                    OUT int        *weight);
+int get_graph_vertex_num(IN int graphid, OUT int *nvertex);
 int get_graph_vertex_indegree(IN  int         graphid, 
                                          IN  const void *pvertex,
                                          OUT int        *indegree);
