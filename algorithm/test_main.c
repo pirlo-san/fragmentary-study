@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "test_graph.h"
+#include "test_vector.h"
 
 typedef void (*test_func_t)(void);
 
@@ -16,7 +17,8 @@ int main(int argc, char *argv[])
     
     test_case_t testcases[] =
     {
-        {"graph", graph_test_cases}
+        {"graph",  graph_test_cases},
+        {"vector", vector_test_cases}
     };
 
     if (argc <= 1)
