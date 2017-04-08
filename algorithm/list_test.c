@@ -59,6 +59,23 @@ int main(int argc, char *argv[])
 
     list_del(&player1->list_node);
     dump_palyers(&players);
+    free(player1);
+
+    list_del(&player2->list_node);
+    dump_palyers(&players);
+    free(player2);
+
+    list_del(&player3->list_node);
+    dump_palyers(&players);
+    free(player3);
+
+    list_del(&player4->list_node);
+    dump_palyers(&players);
+    free(player4);
+
+    list_del(&player5->list_node);
+    dump_palyers(&players);
+    free(player5);
 
     return 0;
 }
