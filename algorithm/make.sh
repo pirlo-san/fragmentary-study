@@ -7,12 +7,9 @@ then
 fi
 
 make clean
-make all
+make $1
 
-for para in $*
-do
-	./testbin $para
-done
+./testbin $1
 
 make clean
 
