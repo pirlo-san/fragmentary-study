@@ -3,8 +3,8 @@
 
 #include "common.h"
 
-#define M_GRAPH_INVALID_WEIGHT        -1
-#define is_graph_weight_valid(weight) ((weight) != M_GRAPH_INVALID_WEIGHT)
+#define M_GRAPH_INFINITE_WEIGHT       (0x7FFFFFFF)
+#define graph_is_valid_weight(weight) ((weight) >= 0 && (weight) < M_GRAPH_INFINITE_WEIGHT)
 
 typedef enum
 {
@@ -21,44 +21,36 @@ typedef enum
 	e_graph_err_other
 }e_graph_err_code;
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-int alloc_graph(IN int bdirected, OUT int *pid);
-int free_graph(IN int id);
-int add_graph_vertex(IN int graphid, IN const void *pvertex);
-int rmv_graph_vertex(IN int graphid, IN const void *pvertex);
-int add_graph_edge(IN int         graphid, 
+EXTERN int graph_alloc(IN int bdirected, OUT int *graphid);
+EXTERN int graph_free(IN int id);
+EXTERN int graph_add_vertex(IN int graphid, IN const void *pvertex);
+EXTERN int graph_rmv_vertex(IN int graphid, IN const void *pvertex);
+EXTERN int graph_add_edge(IN int         graphid, 
                          IN const void *src_vertex, 
                          IN const void *dst_vertex, 
                          IN int         weight);
-int rmv_graph_edge(IN int         graphid, 
+EXTERN int graph_rmv_edge(IN int         graphid, 
 	                     IN const void *src_vertex, 
 	                     IN const void *dst_vertex);
-int update_graph_edge_weight(IN int         graphid, 
+EXTERN int graph_update_edge_weight(IN int         graphid, 
                    	                   IN const void *src_vertex, 
                    	                   IN const void *dst_vertex, 
                    	                   IN int         weight);
-int get_graph_edge_num(IN int graphid, OUT int *nedge);
-int get_graph_edge_weight(IN  int         graphid, 
+EXTERN int graph_get_edge_num(IN int graphid, OUT int *nedge);
+EXTERN int graph_get_edge_weight(IN  int         graphid, 
                                    IN  const void *src_vertex, 
                                    IN  const void *dst_vertex,
                                    OUT int        *weight);
-int get_graph_vertex_num(IN int graphid, OUT int *nvertex);
-int get_graph_vertex_indegree(IN  int         graphid, 
+EXTERN int graph_get_vertex_num(IN int graphid, OUT int *nvertex);
+EXTERN int graph_get_vertex_indegree(IN  int         graphid, 
                                          IN  const void *pvertex,
                                          OUT int        *indegree);
-int get_graph_vertex_outdegree(IN  int         graphid, 
+EXTERN int graph_get_vertex_outdegree(IN  int         graphid, 
                                           IN  const void *pvertex,
                                           OUT int        *outdegree);
-int get_graph_vertex_total_degree(IN  int         graphid, 
+EXTERN int graph_get_vertex_total_degree(IN  int         graphid, 
                                               IN  const void *pvertex,
                                               OUT int        *degree);
-
-#ifdef __cplusplus
-} /* extern "C" */
-#endif
 
 #endif /* _GRAPH_H */
 

@@ -1,6 +1,8 @@
 #ifndef _COMMON_H
 #define _COMMON_H
 
+#include <string.h>
+
 #ifndef IN
 #define IN
 #endif
@@ -17,6 +19,10 @@
 #define EXTERN extern "C"
 #else
 #define EXTERN extern
+#endif
+
+#ifndef bzero
+#define bzero(p, size) memset((p), 0, (size))
 #endif
 
 #define ASSERT_EQUAL_INT(exp1, exp2)                              \
