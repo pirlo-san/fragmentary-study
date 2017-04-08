@@ -1,5 +1,6 @@
+#include <stdio.h>
+#include <string.h>
 #include "graph.h"
-#include "test_api.h"
 
 static void _graph_test_case01(void)
 {
@@ -92,9 +93,18 @@ static void _graph_test_case01(void)
     ASSERT_EQUAL_INT(e_graph_success, free_graph(graphid));
 }
 
-
-void graph_test_cases(void)
+static void _graph_test_cases(void)
 {
     _graph_test_case01();
+}
+
+int main(int argc, char *argv[])
+{
+
+    fprintf(stderr, "graph test begin\n");
+    _graph_test_cases();
+    fprintf(stderr, "graph test end\n\n");
+
+    return 0;    
 }
 

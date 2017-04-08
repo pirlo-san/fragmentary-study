@@ -1,7 +1,7 @@
 #ifndef _GRAPH_H
 #define _GRAPH_H
 
-#include "algorithm_common.h"
+#include "common.h"
 
 #define M_GRAPH_INVALID_WEIGHT        -1
 #define is_graph_weight_valid(weight) ((weight) != M_GRAPH_INVALID_WEIGHT)
