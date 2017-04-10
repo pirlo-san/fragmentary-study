@@ -11,7 +11,6 @@ typedef struct
 	int         nvertex;
 	int         nedge;
 	int         bdirected;
-	const void *vertices[M_GRAPH_MAX_VERTEX_NUM];
 	int         weight[M_GRAPH_MAX_VERTEX_NUM][M_GRAPH_MAX_VERTEX_NUM];
 }graph_t;
 
@@ -42,23 +41,12 @@ static inline graph_t *_graph_get_instance(int graphid)
 	return &g_graphs[index];
 }
 
-static inline int _graph_get_vertex_index(const graph_t *pgraph, const void *pvertex)
+static inline int _graph_is_vertex_index_valid(const graph_t *pgraph, int vertex_index)
 {
-	int index = 0;
-	
-	assert(pgraph);
-	assert(pvertex);
+    if (!pgraph)
+        return 0;
 
-	for (; index < pgraph->nvertex; ++index)
-		if (pvertex == pgraph->vertices[index])
-			return index;
-
-	return -1;
-}
-
-static inline int _graph_is_vertex_exist(const graph_t *pgraph, const void *pvertex)
-{
-	return _graph_get_vertex_index(pgraph, pvertex) >= 0;
+	return ((vertex_index >= 0) && (vertex_index < pgraph->nvertex));
 }
 
 static inline int _graph_is_vertex_full(const graph_t * pgraph)
@@ -87,6 +75,65 @@ static void _graph_init_weight(int weight[M_GRAPH_MAX_VERTEX_NUM][M_GRAPH_MAX_VE
 	for (row = 0; row < M_GRAPH_MAX_VERTEX_NUM; ++row)
 		for (col = 0; col < M_GRAPH_MAX_VERTEX_NUM; ++col)
 			weight[row][col]= M_GRAPH_INFINITE_WEIGHT;
+}
+
+static void _graph_dijkstra_init_su(graph_t *pgraph, int vertex_index, int s[], int u[])
+{
+    int i  = 0;
+    int nu = 0;
+    
+    if (!pgraph)
+        return;
+
+    if (!_graph_is_vertex_index_valid(pgraph, vertex_index))
+        return;
+
+    if (!s || !u)
+        return;
+
+    s[0] = vertex_index;
+    for (i = 0; i < pgraph->nvertex; ++i)
+    {
+        if (i == vertex_index)
+            continue;
+
+        u[nu++] = i;
+    }
+}
+
+static void _graph_dijkstra_init_distances(graph_t *pgraph, int vertex_index, int *distances, int *prevs)
+{
+    int i  = 0;
+    
+    if (!pgraph)
+        return;
+
+    if (!_graph_is_vertex_index_valid(pgraph, vertex_index))
+        return;
+
+    if (!distances || !prevs)
+        return;
+
+    for (i = 0; i < pgraph->nvertex; ++i)
+    {
+        distances[i] = pgraph->weight[vertex_index][i];
+        prevs[i]     = vertex_index;
+    }
+}
+
+static int _graph_dijkstra_get_next_vertex(graph_t *pgraph, int u[], int *distances)
+{
+    return 0;    
+}
+
+static void _graph_dijkstra_append_s(graph_t *pgraph, int s[], int ns, int k)
+{
+    
+}
+
+static void _graph_dijkstra_rmv_u(graph_t *pgraph, int u[], int nu, int k)
+{
+    
 }
 
 int graph_alloc(int bdirected, int *graphid)
@@ -124,12 +171,9 @@ int graph_free(int id)
 	return e_graph_success;
 }
 
-int graph_add_vertex(int graphid, const void *pvertex)
+int graph_add_vertex(int graphid)
 {
 	graph_t *pgraph = 0;
-
-	if (!pvertex)
-		return e_graph_err_null_ptr;
 
 	if (!(pgraph = _graph_get_instance(graphid)))
 		return e_graph_err_id_not_found;
@@ -137,17 +181,13 @@ int graph_add_vertex(int graphid, const void *pvertex)
 	if (_graph_is_vertex_full(pgraph))
 		return e_graph_err_vertex_full;
 
-	if (_graph_is_vertex_exist(pgraph, pvertex))
-		return e_graph_err_vertex_duplicated;
-
-	pgraph->vertices[pgraph->nvertex++] = pvertex;
+	++pgraph->nvertex;
 	return e_graph_success;
 }
 
-int graph_rmv_vertex(int graphid, const void *pvertex)
+int graph_rmv_vertex(int graphid, int vertex_index)
 {
     graph_t *pgraph       = 0;
-    int      vertex_index = -1;
     int      index        = -1;
     int      degree       = 0;
     int      ret          = e_graph_success;
@@ -155,20 +195,16 @@ int graph_rmv_vertex(int graphid, const void *pvertex)
     if (!(pgraph = _graph_get_instance(graphid)))
         return e_graph_err_id_not_found;
 
-    if ( (vertex_index = _graph_get_vertex_index(pgraph, pvertex)) < 0)
-        return e_graph_err_vertex_not_found;
+    if (!_graph_is_vertex_index_valid(pgraph, vertex_index))
+        return e_graph_err_vertex_index_invalid;
 
-    if ( (ret = graph_get_vertex_total_degree(graphid, pvertex, &degree)) != e_graph_success)
+    if ( (ret = graph_get_vertex_total_degree(graphid, vertex_index, &degree)) != e_graph_success)
         return ret;
 
     pgraph->nedge -= degree;
 
     if (vertex_index < pgraph->nvertex - 1)
     {
-        memmove(&pgraph->vertices[vertex_index],
-                &pgraph->vertices[vertex_index + 1],
-                sizeof(void *) * (pgraph->nvertex - 1 - vertex_index));
-
         /* delete all edges start from or end to this vertex */
         memmove(pgraph->weight[vertex_index],
                 pgraph->weight[vertex_index + 1],
@@ -189,14 +225,12 @@ int graph_rmv_vertex(int graphid, const void *pvertex)
     return e_graph_success;
 }
 
-int graph_add_edge(int         graphid, 
-	                     const void *src_vertex, 
-	                     const void *dst_vertex, 
-	                     int         weight)
+int graph_add_edge(int      graphid, 
+	                     int      src_vertex_index, 
+	                     int      dst_vertex_index, 
+	                     int      weight)
 {
-    graph_t *pgraph           = 0;
-    int      src_vertex_index = -1;
-    int      dst_vertex_index = -1;    
+    graph_t *pgraph           = 0; 
     int      temp_weight      = M_GRAPH_INFINITE_WEIGHT;
     int      ret              = e_graph_success;
 
@@ -206,11 +240,11 @@ int graph_add_edge(int         graphid,
     if (!(pgraph = _graph_get_instance(graphid)))
         return e_graph_err_id_not_found;
 
-    if ( (src_vertex_index = _graph_get_vertex_index(pgraph, src_vertex)) < 0
-        || (dst_vertex_index = _graph_get_vertex_index(pgraph, dst_vertex)) < 0)
-        return e_graph_err_vertex_not_found;
+    if (!_graph_is_vertex_index_valid(pgraph, src_vertex_index)
+        || !_graph_is_vertex_index_valid(pgraph, dst_vertex_index))
+        return e_graph_err_vertex_index_invalid;
 
-    ret = graph_get_edge_weight(graphid, src_vertex, dst_vertex, &temp_weight);
+    ret = graph_get_edge_weight(graphid, src_vertex_index, dst_vertex_index, &temp_weight);
     if (ret != e_graph_success)
         return ret;
 
@@ -226,23 +260,21 @@ int graph_add_edge(int         graphid,
 }
 
 int graph_rmv_edge(int         graphid, 
-	                     const void *src_vertex, 
-	                     const void *dst_vertex)
+	                     int         src_vertex_index, 
+	                     int         dst_vertex_index)
 {
-    graph_t *pgraph           = 0;
-    int      src_vertex_index = -1;
-    int      dst_vertex_index = -1;    
+    graph_t *pgraph           = 0; 
     int      temp_weight      = M_GRAPH_INFINITE_WEIGHT;
     int      ret              = e_graph_success;
 
     if (!(pgraph = _graph_get_instance(graphid)))
         return e_graph_err_id_not_found;
 
-    if ( (src_vertex_index = _graph_get_vertex_index(pgraph, src_vertex)) < 0
-        || (dst_vertex_index = _graph_get_vertex_index(pgraph, dst_vertex)) < 0)
-        return e_graph_err_vertex_not_found;
+    if (!_graph_is_vertex_index_valid(pgraph, src_vertex_index)
+        || !_graph_is_vertex_index_valid(pgraph, dst_vertex_index))
+        return e_graph_err_vertex_index_invalid;
 
-    ret = graph_get_edge_weight(graphid, src_vertex, dst_vertex, &temp_weight);
+    ret = graph_get_edge_weight(graphid, src_vertex_index, dst_vertex_index, &temp_weight);
     if (ret != e_graph_success)
         return ret;
 
@@ -257,17 +289,17 @@ int graph_rmv_edge(int         graphid,
     return e_graph_success;  
 }
 
-int graph_update_edge_weight(int         graphid, 
-                   	                   const void *src_vertex, 
-                   	                   const void *dst_vertex, 
-                   	                   int         weight)
+int graph_update_edge_weight(int      graphid, 
+               	                       int      src_vertex_index, 
+               	                       int      dst_vertex_index, 
+               	                       int      weight)
 {
-    int ret = graph_rmv_edge(graphid, src_vertex, dst_vertex);
+    int ret = graph_rmv_edge(graphid, src_vertex_index, dst_vertex_index);
 
     if (ret != e_graph_success)
         return ret;
 
-    return graph_add_edge(graphid, src_vertex, dst_vertex, weight);
+    return graph_add_edge(graphid, src_vertex_index, dst_vertex_index, weight);
 }
 
 int graph_get_edge_num(int graphid, int *nedge)
@@ -284,14 +316,12 @@ int graph_get_edge_num(int graphid, int *nedge)
     return e_graph_success;
 }
 
-int graph_get_edge_weight(int         graphid, 
-                                   const void *src_vertex, 
-                                   const void *dst_vertex,
-                                   int        *weight)
+int graph_get_edge_weight(int      graphid, 
+                                   int      src_vertex_index, 
+                                   int      dst_vertex_index,
+                                   int     *weight)
 {
     graph_t *pgraph           = 0;
-    int      src_vertex_index = -1;
-    int      dst_vertex_index = -1;
 
     if (!weight)
         return e_graph_err_null_ptr;
@@ -299,9 +329,9 @@ int graph_get_edge_weight(int         graphid,
     if (!(pgraph = _graph_get_instance(graphid)))
         return e_graph_err_id_not_found;
 
-    if ( (src_vertex_index = _graph_get_vertex_index(pgraph, src_vertex)) < 0
-        || (dst_vertex_index = _graph_get_vertex_index(pgraph, dst_vertex)) < 0)
-        return e_graph_err_vertex_not_found;
+    if (!_graph_is_vertex_index_valid(pgraph, src_vertex_index)
+        || !_graph_is_vertex_index_valid(pgraph, dst_vertex_index))
+        return e_graph_err_vertex_index_invalid;
 
     *weight = pgraph->weight[src_vertex_index][dst_vertex_index];
     return e_graph_success;
@@ -321,12 +351,11 @@ int graph_get_vertex_num(int graphid, int *nvertex)
     return e_graph_success;
 }
 
-int graph_get_vertex_indegree(int         graphid, 
-                                         const void *pvertex,
-                                         int        *indegree)
+int graph_get_vertex_indegree(int  graphid, 
+                                         int  vertex_index,
+                                         int *indegree)
 {
     graph_t *pgraph       = 0;
-    int      vertex_index = 0;
     int      index        = 0;
 
     if (!indegree)
@@ -335,8 +364,8 @@ int graph_get_vertex_indegree(int         graphid,
     if (!(pgraph = _graph_get_instance(graphid)))
         return e_graph_err_id_not_found;
 
-    if ( (vertex_index = _graph_get_vertex_index(pgraph, pvertex)) < 0)
-        return e_graph_err_vertex_not_found;
+    if (!_graph_is_vertex_index_valid(pgraph, vertex_index))
+        return e_graph_err_vertex_index_invalid;
 
     *indegree = 0;
     for (index = 0; index < pgraph->nvertex; ++index)
@@ -346,12 +375,11 @@ int graph_get_vertex_indegree(int         graphid,
     return e_graph_success; 
 }
 
-int graph_get_vertex_outdegree(int         graphid, 
-                                          const void *pvertex,
-                                          int        *outdegree)
+int graph_get_vertex_outdegree(int  graphid, 
+                                          int  vertex_index,
+                                          int *outdegree)
 {
     graph_t *pgraph       = 0;
-    int      vertex_index = 0;
     int      index        = 0;
 
     if (!outdegree)
@@ -360,8 +388,8 @@ int graph_get_vertex_outdegree(int         graphid,
     if (!(pgraph = _graph_get_instance(graphid)))
         return e_graph_err_id_not_found;
 
-    if ( (vertex_index = _graph_get_vertex_index(pgraph, pvertex)) < 0)
-        return e_graph_err_vertex_not_found;
+    if (!_graph_is_vertex_index_valid(pgraph, vertex_index))
+        return e_graph_err_vertex_index_invalid;
 
     *outdegree = 0;
     for (index = 0; index < pgraph->nvertex; ++index)
@@ -372,16 +400,16 @@ int graph_get_vertex_outdegree(int         graphid,
 
 }
 
-int graph_get_vertex_total_degree(int         graphid, 
-                                              const void *pvertex,
-                                              int        *degree)
+int graph_get_vertex_total_degree(int  graphid, 
+                                              int  vertex_index,
+                                              int *degree)
 {
     int indegree  = 0;
     int outdegree = 0;
     int bdirected = 0;
     int ret       = e_graph_success;
 
-    ret = graph_get_vertex_indegree(graphid, pvertex, &indegree);
+    ret = graph_get_vertex_indegree(graphid, vertex_index, &indegree);
     if (ret != e_graph_success)
         return ret;
 
@@ -394,11 +422,90 @@ int graph_get_vertex_total_degree(int         graphid,
         return e_graph_success;
     }
 
-    ret = graph_get_vertex_outdegree(graphid, pvertex, &outdegree);
+    ret = graph_get_vertex_outdegree(graphid, vertex_index, &outdegree);
     if (ret != e_graph_success)
         return ret;
 
     *degree = indegree + outdegree;
     return e_graph_success;
+}
+
+int graph_dijkstra(int  graphid, 
+                   int  vertex_index,
+                   int *distances,
+                   int *prevs)
+{
+    graph_t *pgraph = 0;
+    int      s[M_GRAPH_MAX_VERTEX_NUM] = {0};
+    int      u[M_GRAPH_MAX_VERTEX_NUM] = {0}; 
+    int      ns = 0;
+    int      nu = 0;
+
+    if (!distances || !prevs)
+        return e_graph_err_null_ptr;
+    
+    if (!(pgraph = _graph_get_instance(graphid)))
+        return e_graph_err_id_not_found;
+
+    if (!_graph_is_vertex_index_valid(pgraph, vertex_index))    
+        return e_graph_err_vertex_index_invalid;
+
+    if (pgraph->nvertex < 2)
+        return e_graph_err_vertex_num_too_few;
+
+    _graph_dijkstra_init_su(pgraph, vertex_index, s, u);
+    ns = 1;
+    nu = pgraph->nvertex - 1;
+    
+    _graph_dijkstra_init_distances(pgraph, vertex_index, distances, prevs);
+    while (nu > 0)
+    {
+        int k = _graph_dijkstra_get_next_vertex(pgraph, u, distances);
+        int distance_sk = distances[k];
+        int index       = 0;
+
+        _graph_dijkstra_append_s(pgraph, s, ns, k);
+        ++ns;
+
+        _graph_dijkstra_rmv_u(pgraph, u, nu, k);
+        --nu;
+        for (index = 0; index < nu; ++index)
+        {
+            int v = u[index];
+            int distance_sv = distances[v];
+            int distance_kv = pgraph->weight[k][v];
+            if (distance_sk + distance_kv < distance_sv)
+            {
+                distances[v] = distance_sk + distance_kv;
+                prevs[v]     = k;
+            }
+        }
+    }
+    
+    return e_graph_success;
+}
+
+int graph_get_shortest_path_len(int  graphid, 
+                                            int  src_vertex_index,
+                                            int  dst_vertex_index,
+                                            int *prevs)
+{
+    graph_t *pgraph                            = 0;
+    int      distances[M_GRAPH_MAX_VERTEX_NUM] = {0};
+    
+    if (!prevs)
+        return M_GRAPH_INFINITE_WEIGHT;
+
+    if (!(pgraph = _graph_get_instance(graphid)))
+        return M_GRAPH_INFINITE_WEIGHT;    
+
+    if (!_graph_is_vertex_index_valid(pgraph, src_vertex_index)
+        || !_graph_is_vertex_index_valid(pgraph, dst_vertex_index))
+        return M_GRAPH_INFINITE_WEIGHT;
+
+    if (e_graph_success != graph_dijkstra(graphid, src_vertex_index, distances, prevs))
+        return M_GRAPH_INFINITE_WEIGHT;
+
+    return distances[dst_vertex_index];
 }
 
