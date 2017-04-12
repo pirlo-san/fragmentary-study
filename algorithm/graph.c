@@ -74,7 +74,12 @@ static void _graph_init_weight(int weight[M_GRAPH_MAX_VERTEX_NUM][M_GRAPH_MAX_VE
 
 	for (row = 0; row < M_GRAPH_MAX_VERTEX_NUM; ++row)
 		for (col = 0; col < M_GRAPH_MAX_VERTEX_NUM; ++col)
-			weight[row][col]= M_GRAPH_INFINITE_WEIGHT;
+        {
+            if (row == col)
+                weight[row][col] = 0;
+            else
+			    weight[row][col]= M_GRAPH_INFINITE_WEIGHT;
+        }
 }
 
 static void _graph_dijkstra_init_su(graph_t *pgraph, int vertex_index, int s[], int u[])
@@ -121,19 +126,44 @@ static void _graph_dijkstra_init_distances(graph_t *pgraph, int vertex_index, in
     }
 }
 
-static int _graph_dijkstra_get_next_vertex(graph_t *pgraph, int u[], int *distances)
+static int _graph_dijkstra_get_next_vertex(int u[], int nu, int *distances)
 {
-    return 0;    
+    int i            = 0;
+    int min_distance = M_GRAPH_INFINITE_WEIGHT;
+    int result       = 0;
+
+    for (; i < nu; ++i)
+    {
+        int v = u[i];
+
+        if (distances[v] < min_distance)
+        {
+            min_distance = distances[v];
+            result       = v;
+        }
+        
+    }
+    
+    return result;
 }
 
-static void _graph_dijkstra_append_s(graph_t *pgraph, int s[], int ns, int k)
+static void _graph_dijkstra_append_s(int s[], int ns, int k)
 {
-    
+    s[ns] = k;
 }
 
-static void _graph_dijkstra_rmv_u(graph_t *pgraph, int u[], int nu, int k)
+static void _graph_dijkstra_rmv_u(int u[], int nu, int k)
 {
+    int i = 0;
+
+    for (; i < nu; ++i)
+        if (u[i] == k)
+            break;
     
+    if (i + 1 >= nu)
+        return;
+    
+    memmove(&u[i], &u[i + 1], (nu - 1 - i) * sizeof(int));
 }
 
 int graph_alloc(int bdirected, int *graphid)
@@ -217,8 +247,15 @@ int graph_rmv_vertex(int graphid, int vertex_index)
 
     for (index = 0; index < pgraph->nvertex; ++index)
     {
-        pgraph->weight[pgraph->nvertex - 1][index] = M_GRAPH_INFINITE_WEIGHT;
-        pgraph->weight[index][pgraph->nvertex - 1] = M_GRAPH_INFINITE_WEIGHT;
+        if (pgraph->nvertex - 1 == index)
+        {
+            pgraph->weight[pgraph->nvertex - 1][index] = 0;
+        }
+        else
+        {
+            pgraph->weight[pgraph->nvertex - 1][index] = M_GRAPH_INFINITE_WEIGHT;
+            pgraph->weight[index][pgraph->nvertex - 1] = M_GRAPH_INFINITE_WEIGHT;
+        }
     }
 
     --pgraph->nvertex;
@@ -266,6 +303,9 @@ int graph_rmv_edge(int         graphid,
     graph_t *pgraph           = 0; 
     int      temp_weight      = M_GRAPH_INFINITE_WEIGHT;
     int      ret              = e_graph_success;
+
+    if (src_vertex_index == dst_vertex_index)
+        return e_graph_success;
 
     if (!(pgraph = _graph_get_instance(graphid)))
         return e_graph_err_id_not_found;
@@ -369,7 +409,8 @@ int graph_get_vertex_indegree(int  graphid,
 
     *indegree = 0;
     for (index = 0; index < pgraph->nvertex; ++index)
-        if (graph_is_valid_weight(pgraph->weight[index][vertex_index]))
+        if (index != vertex_index
+            && graph_is_valid_weight(pgraph->weight[index][vertex_index]))
             ++(*indegree);
 
     return e_graph_success; 
@@ -393,7 +434,8 @@ int graph_get_vertex_outdegree(int  graphid,
 
     *outdegree = 0;
     for (index = 0; index < pgraph->nvertex; ++index)
-        if (graph_is_valid_weight(pgraph->weight[vertex_index][index]))
+        if (index != vertex_index
+            && graph_is_valid_weight(pgraph->weight[vertex_index][index]))
             ++(*outdegree);
 
     return e_graph_success; 
@@ -460,20 +502,24 @@ int graph_dijkstra(int  graphid,
     _graph_dijkstra_init_distances(pgraph, vertex_index, distances, prevs);
     while (nu > 0)
     {
-        int k = _graph_dijkstra_get_next_vertex(pgraph, u, distances);
+        int k = _graph_dijkstra_get_next_vertex(u, nu, distances);
         int distance_sk = distances[k];
         int index       = 0;
 
-        _graph_dijkstra_append_s(pgraph, s, ns, k);
+        _graph_dijkstra_append_s(s, ns, k);
         ++ns;
 
-        _graph_dijkstra_rmv_u(pgraph, u, nu, k);
+        _graph_dijkstra_rmv_u(u, nu, k);
         --nu;
         for (index = 0; index < nu; ++index)
         {
             int v = u[index];
             int distance_sv = distances[v];
             int distance_kv = pgraph->weight[k][v];
+
+            if (M_GRAPH_INFINITE_WEIGHT == distance_kv)
+                continue;
+            
             if (distance_sk + distance_kv < distance_sv)
             {
                 distances[v] = distance_sk + distance_kv;

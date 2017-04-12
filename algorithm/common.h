@@ -25,6 +25,8 @@
 #define bzero(p, size) memset((p), 0, (size))
 #endif
 
+#define arrsize(arr) (sizeof(arr) / sizeof(arr[0]))
+
 #define ASSERT_EQUAL_INT(exp1, exp2)                              \
     do                                                            \
     {                                                             \
