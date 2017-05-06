@@ -9,7 +9,7 @@ fi
 make clean
 make $1
 
-./testbin
+./test$1
 
 make clean
 
