@@ -18,17 +18,16 @@ static int cmpint(const void *e1, const void *e2, void *arg)
 /* interger */
 static void _sort_test_case01(void)
 {
-    int    arr[20] = {0};
-    size_t idx = 0;
+    int arr[1000] = {0};
+
+    unix_random(arr, sizeof(arr));
+    bubble_sort(arr, arrsize(arr), sizeof(int), cmpint, 0);
+    ASSERT_INCREASE_INT_ARRAY(arr);
 
     unix_random(arr, sizeof(arr));  
-    /* dump_int_array(arr, arrsize(arr)); */
-    bubble_sort(arr, arrsize(arr), sizeof(int), cmpint, 0);  
-    /* dump_int_array(arr, arrsize(arr)); */
-    for (idx = 0; idx < arrsize(arr) - 1; ++idx)
-    {
-        ASSERT_INT_LESSEQUAL(arr[idx], arr[idx + 1]);
-    }
+    select_sort(arr, arrsize(arr), sizeof(int), cmpint, 0);  
+    ASSERT_INCREASE_INT_ARRAY(arr);
+
 }
 
 static void _sort_test_cases(void)

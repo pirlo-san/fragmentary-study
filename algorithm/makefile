@@ -2,13 +2,13 @@
 all: graph list sort
 
 graph:
-	gcc graph*.c -o testgraph
+	gcc graph*.c -o graph.bin
 
 list:
-	gcc list*.c  -o testlist
+	gcc list*.c  -o list.bin
 
 sort:
-	gcc sort*.c common.c -o testsort
+	gcc sort*.c common.c -o sort.bin
 
 clean:
-	rm -f testbin *.o
+	rm -f *.bin *.o

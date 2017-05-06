@@ -3,6 +3,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdio.h>
+#include "common.h"
 
 void unix_random(void *random, size_t size)
 {
@@ -12,7 +13,7 @@ void unix_random(void *random, size_t size)
     if (!random || size <= 0)
         return;
 
-    if ( (fd = open("/dev/random", O_RDONLY)) < 0)
+    if ( (fd = open("/dev/urandom", O_RDONLY)) < 0)
         return;
 
     fcntl(fd, F_SETFL, O_NONBLOCK);
@@ -25,6 +26,17 @@ void unix_random(void *random, size_t size)
     }
     
     close(fd);
+}
+
+void random_array(void *arr, size_t n, size_t size)
+{
+    size_t idx = 0;
+
+    if (!arr || n <= 0 || size <= 0)
+        return;
+
+    for (; idx < n; ++idx)
+        unix_random(elememt_at(arr, size, idx), size);
 }
 
 void dump_int_array(int arr[], size_t size)
