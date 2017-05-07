@@ -43,3 +43,30 @@ void select_sort(void *base, size_t n, size_t size, cmpfunc_t cmp, void *arg)
             swap_element(elememt_at(base, size, minidx), elememt_at(base, size, idx), size);
     }
 }
+
+void insert_sort(void *base, size_t n, size_t size, cmpfunc_t cmp, void *arg)
+{
+    size_t idx = 1;
+
+    if (!valid_para(base, n, size, cmp))
+        return;
+
+    for (; idx < n; ++idx)
+    {
+        size_t inner_idx = 0;
+        for (; inner_idx < idx; ++inner_idx)
+            if (cmp(const_elememt_at(base, size, idx), const_elememt_at(base, size, inner_idx), arg) < 0)
+                break;
+        if (inner_idx >= idx)
+            continue;
+
+        void *tmp = calloc(1, size);
+        memcpy(tmp, const_elememt_at(base, size, idx), size);
+        memmove(elememt_at(base, size, inner_idx + 1), 
+                elememt_at(base, size, inner_idx),
+                size * (idx - inner_idx));
+        memcpy(elememt_at(base, size, inner_idx), tmp, size);
+        free(tmp);
+    }
+}
+
