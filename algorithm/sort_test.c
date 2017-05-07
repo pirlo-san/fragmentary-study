@@ -32,6 +32,10 @@ static void _sort_test_case01(void)
     insert_sort(arr, arrsize(arr), sizeof(int), cmpint, 0);  
     ASSERT_INCREASE_INT_ARRAY(arr);
 
+    unix_random(arr, sizeof(arr));  
+    quick_sort(arr, arrsize(arr), sizeof(int), cmpint, 0);  
+    ASSERT_INCREASE_INT_ARRAY(arr);
+
 }
 
 static void _sort_test_cases(void)
