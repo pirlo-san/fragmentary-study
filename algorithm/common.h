@@ -60,7 +60,7 @@
     {                                                             \
         if ((exp1) > (exp2))                                      \
             fprintf(stderr,                                       \
-                    "[%s:%d], assertion failure: %d >= %d\n",     \
+                    "[%s:%d], assertion failure: %d > %d\n",      \
                     __FUNCTION__,                                 \
                     __LINE__,                                     \
                     (int)(exp1),                                  \
@@ -73,6 +73,14 @@
         size_t idx = 0;                                           \
         for (; idx < arrsize(arr) - 1; ++idx)                     \
             ASSERT_INT_LESSEQUAL(arr[idx], arr[idx + 1]);         \
+    }while (0)
+
+#define ASSERT_INTARR_EQUAL(arr1, arr2)                           \
+    do                                                            \
+    {                                                             \
+        size_t idx = 0;                                           \
+        for (; idx < arrsize(arr1) - 1; ++idx)                    \
+            ASSERT_INT_EQUAL(arr1[idx], arr2[idx]);               \
     }while (0)
 
 EXTERN void unix_random(void *random, size_t size);
